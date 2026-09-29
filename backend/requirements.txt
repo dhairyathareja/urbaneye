@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydantic
+websockets
+pillow
+requests
+ultralytics
+torch
+torchvision
+sqlalchemy
+opencv-python
+python-multipart

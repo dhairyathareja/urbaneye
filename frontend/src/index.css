@@ -1,0 +1,632 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #030404;
+    --bg-surface: #07090c;
+    --bg-surface-elevated: #0d1016;
+    --border-subtle: rgba(255, 255, 255, 0.12);
+    --border-hover: rgba(255, 255, 255, 0.24);
+    --urban-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --urban-display: "Sora", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --urban-dim: rgba(255, 255, 255, 0.65);
+    --urban-dimmer: rgba(255, 255, 255, 0.43);
+    --urban-line: rgba(255, 255, 255, 0.16);
+    --urban-line-strong: rgba(255, 255, 255, 0.34);
+    --urban-glass: rgba(255, 255, 255, 0.075);
+    --urban-solid: rgba(255, 255, 255, 0.13);
+    --urban-ease: cubic-bezier(.16, 1, .3, 1);
+  }
+
+  body {
+    background-color: #030404;
+    color: #e2e8f0;
+    font-family: "Sora", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Headings: Sora font, clean geometric styling */
+  h1, h2, h3, h4, h5, h6, .font-heading, .heading-serif {
+    font-family: "Sora", "Inter", -apple-system, BlinkMacSystemFont, sans-serif !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  /* Universal font family inheritance */
+  p, span, label, button, input, select, textarea, td, th, li, a {
+    font-family: "Sora", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+/* Minimalist scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Leaflet Map Custom Refined Overrides */
+.leaflet-container {
+  background: #030404 !important;
+  font-family: "Sora", "Inter", sans-serif !important;
+  font-size: 12px !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(7, 9, 12, 0.95) !important;
+  backdrop-filter: blur(16px) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8) !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-content {
+  margin: 8px 10px !important;
+  line-height: 1.4 !important;
+  font-size: 12px !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(7, 9, 12, 0.95) !important;
+}
+
+/* Custom Marker Hover effects */
+.custom-pin-marker, .custom-bus-marker {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.custom-pin-marker:hover, .custom-bus-marker:hover {
+  transform: scale(1.12);
+  z-index: 1000 !important;
+}
+
+/* Subtle breathing glow for active points */
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+.pulse-subtle {
+  animation: subtle-pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ==========================================================================
+   UrbanEye Auth / Landing Styles (Identical to Manus Production Design)
+   ========================================================================== */
+:root {
+  --urban-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --urban-display: "Sora", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --urban-dim: rgba(255, 255, 255, 0.65);
+  --urban-dimmer: rgba(255, 255, 255, 0.43);
+  --urban-line: rgba(255, 255, 255, 0.16);
+  --urban-line-strong: rgba(255, 255, 255, 0.34);
+  --urban-glass: rgba(255, 255, 255, 0.075);
+  --urban-solid: rgba(255, 255, 255, 0.13);
+  --urban-ease: cubic-bezier(.16, 1, .3, 1);
+}
+
+.urban-shell {
+  isolation: isolate;
+  color: #fff;
+  background: #030404;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.urban-media, .urban-scrim {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.urban-media {
+  z-index: 0;
+  background: #050606;
+}
+
+.urban-media:after {
+  content: "";
+  background: rgba(0, 0, 0, 0.12);
+  position: absolute;
+  inset: 0;
+}
+
+.urban-media video {
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.74) contrast(1.08) brightness(0.72);
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.urban-scrim {
+  z-index: 1;
+  background: linear-gradient(90deg, rgba(0,0,0,0) 0% 38%, rgba(0,0,0,0.2) 61%, rgba(0,0,0,0.86) 100%),
+              linear-gradient(rgba(0,0,0,0.66), rgba(0,0,0,0) 22% 66%, rgba(0,0,0,0.88));
+}
+
+.urban-nav {
+  z-index: 10;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  padding: clamp(23px, 2.45vw, 35px) clamp(24px, 5vw, 100px) 18px;
+  display: flex;
+  position: relative;
+}
+
+.urban-logo {
+  color: #fff;
+  font-family: var(--urban-display);
+  letter-spacing: 0.18em;
+  font-size: clamp(20px, 1.72vw, 30px);
+  font-weight: 200;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.urban-nav-links {
+  font-family: var(--urban-mono);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  align-items: center;
+  gap: clamp(18px, 2.8vw, 56px);
+  font-size: clamp(10px, 0.69vw, 13px);
+  font-weight: 400;
+  display: flex;
+}
+
+.urban-nav-links a {
+  color: var(--urban-dim);
+  text-decoration: none;
+  transition: color 0.22s;
+}
+
+.urban-nav-links a:hover,
+.urban-nav-links a:focus-visible {
+  color: #fff;
+}
+
+.urban-nav-cta {
+  border: 1px solid var(--urban-line-strong);
+  color: #fff;
+  font-family: var(--urban-mono);
+  font-size: inherit;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.2);
+  align-items: center;
+  gap: 9px;
+  padding: 12px 18px;
+  transition: background 0.22s, border-color 0.22s, transform 0.16s;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.urban-nav-cta:hover {
+  background: var(--urban-glass);
+  border-color: #fff;
+}
+
+.urban-body {
+  z-index: 10;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 0;
+  padding: 26px clamp(24px, 5vw, 100px) 34px;
+  display: flex;
+  overflow-y: auto;
+  position: relative;
+}
+
+.urban-panel {
+  width: min(39vw, 520px);
+  min-width: 340px;
+}
+
+.urban-chip {
+  color: rgba(255, 255, 255, 0.83);
+  font-family: var(--urban-mono);
+  letter-spacing: 0.16em;
+  background: rgba(255, 255, 255, 0.11);
+  padding: 8px 12px;
+  font-size: clamp(10px, 0.68vw, 12px);
+  line-height: 1;
+  display: inline-block;
+  border-left: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.urban-kicker {
+  color: rgba(255, 255, 255, 0.58);
+  font-family: var(--urban-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin: clamp(24px, 2.5vw, 40px) 0 0;
+  font-size: clamp(10px, 0.67vw, 12px);
+  font-weight: 300;
+}
+
+.urban-panel h1 {
+  color: #fff;
+  font-family: var(--urban-display);
+  letter-spacing: 0.035em;
+  margin: 10px 0 0;
+  font-size: clamp(44px, 5.5vw, 84px);
+  font-weight: 200;
+  line-height: 0.92;
+}
+
+.urban-tagline {
+  max-width: 440px;
+  color: var(--urban-dim);
+  font-family: var(--urban-mono);
+  letter-spacing: 0.09em;
+  margin: 18px 0 0;
+  font-size: clamp(11px, 0.82vw, 14px);
+  font-weight: 300;
+  line-height: 1.55;
+}
+
+.urban-form {
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  margin-top: clamp(28px, 3.2vw, 48px);
+  display: flex;
+}
+
+.urban-field {
+  border-bottom: 1px solid var(--urban-line-strong);
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  transition: border-color 0.22s;
+  display: flex;
+}
+
+.urban-field:focus-within {
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+.urban-field.has-error {
+  border-color: rgba(255, 152, 139, 0.88);
+}
+
+.urban-field > svg {
+  color: rgba(255, 255, 255, 0.62);
+  flex: none;
+}
+
+.urban-field input {
+  color: #fff;
+  min-width: 0;
+  font-family: var(--urban-display);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  flex: 1;
+  padding: 0 2px 1px;
+  font-size: clamp(14px, 0.92vw, 17px);
+  font-weight: 300;
+}
+
+.urban-field input::placeholder {
+  color: var(--urban-dim);
+  opacity: 1;
+}
+
+.urban-field input:focus::placeholder {
+  color: var(--urban-dimmer);
+}
+
+.urban-visibility {
+  color: rgba(255, 255, 255, 0.62);
+  background: transparent;
+  border: 0;
+  flex: 0 0 30px;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  transition: color 0.18s;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.urban-visibility:hover {
+  color: #fff;
+}
+
+.urban-error {
+  color: #ffb3a8;
+  font-family: var(--urban-mono);
+  letter-spacing: 0.02em;
+  margin: 8px 0 0 28px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.urban-form-meta {
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0 20px;
+  display: flex;
+}
+
+.urban-check-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-family: var(--urban-mono);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  line-height: 1.35;
+  display: inline-flex;
+  position: relative;
+}
+
+.urban-check-label input {
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  position: absolute;
+}
+
+.urban-checkmark {
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  width: 13px;
+  height: 13px;
+  transition: border-color 0.18s, background 0.18s;
+  display: inline-block;
+}
+
+.urban-check-label input:checked + .urban-checkmark {
+  background: linear-gradient(135deg, #fff 0 45%, transparent 45% 100%);
+  border-color: #fff;
+}
+
+.urban-text-link {
+  color: rgba(255, 255, 255, 0.65);
+  font-family: var(--urban-mono);
+  letter-spacing: 0.04em;
+  text-underline-offset: 4px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-size: 11px;
+  text-decoration: underline transparent;
+  transition: color 0.18s, text-decoration-color 0.18s;
+  cursor: pointer;
+}
+
+.urban-text-link:hover {
+  color: #fff;
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+.urban-button {
+  color: #fff;
+  width: 100%;
+  min-height: 54px;
+  font-family: var(--urban-mono);
+  letter-spacing: 0.16em;
+  text-align: left;
+  border: 1px solid transparent;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  font-size: clamp(10px, 0.72vw, 13px);
+  transition: background 0.22s, border-color 0.22s, transform 0.16s;
+  display: flex;
+  cursor: pointer;
+}
+
+.urban-button-solid {
+  background: var(--urban-solid);
+}
+
+.urban-button-solid:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.urban-notice {
+  color: rgba(210, 239, 222, 0.9);
+  font-family: var(--urban-mono);
+  letter-spacing: 0.02em;
+  margin: 14px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.urban-select {
+  color: #fff;
+  min-width: 0;
+  font-family: var(--urban-display);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  flex: 1;
+  padding: 0 2px 1px;
+  font-size: clamp(14px, 0.92vw, 17px);
+  font-weight: 300;
+  cursor: pointer;
+}
+
+.urban-select option {
+  color: #0b1220;
+  background: #fff;
+}
+
+.urban-divider {
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  display: flex;
+}
+
+.urban-divider::before,
+.urban-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--urban-line-strong);
+}
+
+.urban-divider span {
+  color: var(--urban-dimmer);
+  letter-spacing: 0.16em;
+  font-size: 10px;
+}
+
+.urban-button-google {
+  color: #1f1f1f;
+  width: 100%;
+  min-height: 54px;
+  font-family: var(--urban-mono);
+  letter-spacing: 0.05em;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  font-size: clamp(11px, 0.76vw, 13px);
+  font-weight: 500;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.16s;
+  display: flex;
+  cursor: pointer;
+}
+
+.urban-button-google:hover {
+  background: #f6f6f6;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+}
+
+.urban-button-google:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.urban-switch-line {
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+  margin: 18px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.urban-back-link {
+  align-self: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  display: inline-flex;
+}
+
+.urban-panel-note {
+  color: var(--urban-dimmer);
+  font-family: var(--urban-mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  align-items: center;
+  gap: 10px;
+  margin-top: clamp(24px, 2.4vw, 40px);
+  font-size: 10px;
+  display: flex;
+}
+
+.urban-panel-note svg {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.urban-footer {
+  z-index: 10;
+  border-top: 1px solid var(--urban-line);
+  padding: 17px clamp(24px, 5vw, 100px) calc(20px + env(safe-area-inset-bottom));
+  color: var(--urban-dimmer);
+  font-family: var(--urban-display);
+  text-align: center;
+  font-size: clamp(10px, 0.72vw, 13px);
+  font-weight: 300;
+  line-height: 1.5;
+  position: relative;
+}
+
+.urban-footer a {
+  color: rgba(255, 255, 255, 0.86);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: color 0.18s;
+}
+
+.urban-footer a:hover {
+  color: var(--urban-dim);
+}
+
+/* Left-side lens ring artwork (960 x 858 source, anchored to the top-left of the page) */
+.urban-ring {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  height: min(100%, 53.625vw);
+  aspect-ratio: 960 / 858;
+  mix-blend-mode: lighten; /* keeps the artwork pixel-exact while its black edges melt into the page */
+}
+
+.urban-ring img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+
+@media (max-width: 900px) {
+  .urban-nav-links a {
+    display: none;
+  }
+  .urban-nav-links {
+    gap: 12px;
+  }
+  .urban-body {
+    justify-content: center;
+    padding-top: 20px;
+  }
+  .urban-panel {
+    width: min(88vw, 520px);
+  }
+  
+  .urban-ring {
+    height: min(100%, 95vw);
+    left: -30%;
+    opacity: 0.45;
+  }
+}
+
