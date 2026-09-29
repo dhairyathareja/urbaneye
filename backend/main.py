@@ -7,8 +7,6 @@ from typing import List, Dict, Any, Optional
 
 import threading
 
-SNAPSHOT_CACHE = {}
-SNAPSHOT_CACHE_LOCK = threading.Lock()
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Response, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -161,21 +159,7 @@ def get_incident_snapshot(incident_id: str, cam: Optional[str] = "FRONT_AI", wea
         inc_type = incident.type if incident else "pothole"
         bus_id = incident.bus_id if incident else "UK 07 PA 0142"
         conf = incident.confidence if incident else 0.94
-        cache_key = f"{incident_id}_{cam}_{weather}"
-
-        with SNAPSHOT_CACHE_LOCK:
-            cached_image = SNAPSHOT_CACHE.get(cache_key)
-
-        if cached_image is not None:
-            return Response(
-                content=cached_image,
-                media_type="image/jpeg"
-            )
-        if cache_key in SNAPSHOT_CACHE:
-            return Response(
-                content=SNAPSHOT_CACHE[cache_key],
-                media_type="image/jpeg"
-            )
+      
         img_bytes = generate_annotated_frame(
             incident_type=inc_type,
             bus_id=bus_id,
@@ -184,8 +168,7 @@ def get_incident_snapshot(incident_id: str, cam: Optional[str] = "FRONT_AI", wea
             weather=weather,
             incident_id=incident_id
         )
-        with SNAPSHOT_CACHE_LOCK:
-            SNAPSHOT_CACHE[cache_key] = img_bytes
+        
         return Response(content=img_bytes, media_type="image/jpeg")
 
     # Check if a custom saved snapshot file exists on disk
