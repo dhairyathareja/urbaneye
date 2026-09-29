@@ -5,6 +5,11 @@ import time
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
+import threading
+
+SNAPSHOT_CACHE = {}
+SNAPSHOT_CACHE_LOCK = threading.Lock()
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Response, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -16,8 +21,7 @@ from models import Incident as IncidentModel, AIDetectionLog as AIDetectionLogMo
 from simulated_data import BUS_FLEET, BUS_WAYPOINTS, INITIAL_INCIDENTS, ROAD_DIGITAL_TWINS, MULTI_PASS_DEFECTS, VEHICLE_COUNTING_STREAM, generate_evidence_hash
 from cv_engine import generate_annotated_frame, run_real_cv_inference, ASSETS_DIR, CUSTOM_MODEL_PATH, BASE_MODEL_PATH
 
-# In-memory cache for generated incident snapshots
-SNAPSHOT_CACHE = {}
+
 
 app = FastAPI(
     title="URBANEYE API",
@@ -158,6 +162,15 @@ def get_incident_snapshot(incident_id: str, cam: Optional[str] = "FRONT_AI", wea
         bus_id = incident.bus_id if incident else "UK 07 PA 0142"
         conf = incident.confidence if incident else 0.94
         cache_key = f"{incident_id}_{cam}_{weather}"
+
+        with SNAPSHOT_CACHE_LOCK:
+            cached_image = SNAPSHOT_CACHE.get(cache_key)
+
+        if cached_image is not None:
+            return Response(
+                content=cached_image,
+                media_type="image/jpeg"
+            )
         if cache_key in SNAPSHOT_CACHE:
             return Response(
                 content=SNAPSHOT_CACHE[cache_key],
@@ -171,7 +184,8 @@ def get_incident_snapshot(incident_id: str, cam: Optional[str] = "FRONT_AI", wea
             weather=weather,
             incident_id=incident_id
         )
-        SNAPSHOT_CACHE[cache_key] = img_bytes
+        with SNAPSHOT_CACHE_LOCK:
+            SNAPSHOT_CACHE[cache_key] = img_bytes
         return Response(content=img_bytes, media_type="image/jpeg")
 
     # Check if a custom saved snapshot file exists on disk
