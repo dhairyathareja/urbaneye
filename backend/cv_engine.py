@@ -94,7 +94,34 @@ def draw_dashed_rectangle(img, pt1, pt2, color, thickness=2, dash_len=10, gap_le
         cv2.line(img, (x1, y), (x1, ye), color, thickness)
         cv2.line(img, (x2, y), (x2, ye), color, thickness)
 
-def run_real_cv_inference(image_bytes, target_hazard="pothole", bus_id="UK 07 PA 0142", weather="clear", cam_angle="FRONT_AI", incident_id=None):
+def run_real_cv_inference(
+    image_bytes,
+    target_hazard="pothole",
+    bus_id="UK 07 PA 0142",
+    weather="clear",
+    cam_angle="FRONT_AI",
+    incident_id=None
+):
+    with INFERENCE_LOCK:
+        return _run_real_cv_inference(
+            image_bytes,
+            target_hazard,
+            bus_id,
+            weather,
+            cam_angle,
+            incident_id
+        )
+
+def _run_real_cv_inference(image_bytes, target_hazard="pothole", bus_id="UK 07 PA 0142", weather="clear", cam_angle="FRONT_AI", incident_id=None):
+    with INFERENCE_LOCK:
+        return _run_real_cv_inference(
+            image_bytes,
+            target_hazard,
+            bus_id,
+            weather,
+            cam_angle,
+            incident_id
+        )
     """
     GENUINE MULTI-SENSOR COMPUTER VISION INFERENCE PIPELINE:
     1. Decodes real photograph using OpenCV
@@ -114,9 +141,9 @@ def run_real_cv_inference(image_bytes, target_hazard="pothole", bus_id="UK 07 PA
 
     height, width = img_bgr.shape[:2]
     # Resize ultra-high-res images for optimal HUD drawing and standard 720p/1080p display
-    if width > 1920:
-        scale = 1920.0 / width
-        img_bgr = cv2.resize(img_bgr, (1920, int(height * scale)))
+    if width > 1280:
+        scale = 1280.0 / width
+        img_bgr = cv2.resize(img_bgr, (1280, int(height * scale)))
         height, width = img_bgr.shape[:2]
     elif width < 640:
         scale = 640.0 / width
