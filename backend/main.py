@@ -16,6 +16,9 @@ from models import Incident as IncidentModel, AIDetectionLog as AIDetectionLogMo
 from simulated_data import BUS_FLEET, BUS_WAYPOINTS, INITIAL_INCIDENTS, ROAD_DIGITAL_TWINS, MULTI_PASS_DEFECTS, VEHICLE_COUNTING_STREAM, generate_evidence_hash
 from cv_engine import generate_annotated_frame, run_real_cv_inference, ASSETS_DIR, CUSTOM_MODEL_PATH, BASE_MODEL_PATH
 
+# In-memory cache for generated incident snapshots
+SNAPSHOT_CACHE = {}
+
 app = FastAPI(
     title="URBANEYE API",
     description="AI-Powered Mobile Urban Intelligence Platform Backend",
@@ -154,6 +157,12 @@ def get_incident_snapshot(incident_id: str, cam: Optional[str] = "FRONT_AI", wea
         inc_type = incident.type if incident else "pothole"
         bus_id = incident.bus_id if incident else "UK 07 PA 0142"
         conf = incident.confidence if incident else 0.94
+        cache_key = f"{incident_id}_{cam}_{weather}"
+        if cache_key in SNAPSHOT_CACHE:
+            return Response(
+                content=SNAPSHOT_CACHE[cache_key],
+                media_type="image/jpeg"
+            )
         img_bytes = generate_annotated_frame(
             incident_type=inc_type,
             bus_id=bus_id,
@@ -162,6 +171,7 @@ def get_incident_snapshot(incident_id: str, cam: Optional[str] = "FRONT_AI", wea
             weather=weather,
             incident_id=incident_id
         )
+        SNAPSHOT_CACHE[cache_key] = img_bytes
         return Response(content=img_bytes, media_type="image/jpeg")
 
     # Check if a custom saved snapshot file exists on disk
