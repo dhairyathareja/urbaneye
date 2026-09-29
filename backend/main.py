@@ -68,6 +68,10 @@ def read_root():
         "cv_engine": f"{model_active} + Real-Time Edge Telemetry"
     }
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 @app.get("/api/model-info")
 def get_model_info():
     """Returns AI model details, weights status, and training dataset statistics."""

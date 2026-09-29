@@ -69,9 +69,9 @@ export default function App() {
       const timeoutId = setTimeout(() => controller.abort(), 1200)
 
       const [busesRes, incRes, analyticsRes] = await Promise.all([
-        fetch('http://localhost:8000/api/buses', { signal: controller.signal }),
-        fetch('http://localhost:8000/api/incidents', { signal: controller.signal }),
-        fetch('http://localhost:8000/api/analytics', { signal: controller.signal })
+        fetch(`${import.meta.env.VITE_API_URL}/api/buses`, { signal: controller.signal }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/incidents`, { signal: controller.signal }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/analytics`, { signal: controller.signal })
       ])
       
       clearTimeout(timeoutId)
@@ -105,7 +105,7 @@ export default function App() {
 
   const handlePerformAction = async (incidentId, action, assignedDept = '') => {
     try {
-      const res = await fetch(`http://localhost:8000/api/incidents/${incidentId}/action`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/incidents/${incidentId}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, assigned_dept: assignedDept })
@@ -129,7 +129,7 @@ export default function App() {
 
   const handleTriggerPitchEvent = async (payload) => {
     try {
-      const res = await fetch('http://localhost:8000/api/trigger-event', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/trigger-event`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

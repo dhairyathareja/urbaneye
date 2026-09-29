@@ -92,7 +92,7 @@ export default function LiveCameraFeed({ buses, selectedBus, setSelectedBus, act
 
   const activeCamInfo = camAngles.find((c) => c.id === activeCam) || camAngles[0]
 
-  const backendSnapshotUrl = `http://localhost:8000/api/snapshots/${activeIncident?.id || 'INC-9041'}.jpg?cam=${activeCam}&weather=${activeWeather}&t=${Date.now()}`
+  const backendSnapshotUrl = `${import.meta.env.VITE_API_URL}/api/snapshots/${activeIncident?.id || 'INC-9041'}.jpg?cam=${activeCam}&weather=${activeWeather}&t=${Date.now()}`
   const svgFallbackUrl = generateSvgSnapshot(activeIncident?.type || 'pothole', currentBus.id, 0.98, activeCam, activeWeather)
 
   return (

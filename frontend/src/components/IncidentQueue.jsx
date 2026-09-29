@@ -182,7 +182,7 @@ export default function IncidentQueue({ incidents, onSelectIncident, onPerformAc
                 {/* Frame Preview */}
                 <div className="relative rounded-xl overflow-hidden border border-white/[0.06] aspect-video bg-zinc-950">
                   <img
-                    src={`http://localhost:8000${inc.snapshot_url}`}
+                    src={`${import.meta.env.VITE_API_URL}${inc.snapshot_url}`}
                     onError={(e) => {
                       e.target.src = generateSvgSnapshot(inc.type, inc.bus_id, inc.confidence)
                     }}

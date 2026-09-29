@@ -34,7 +34,7 @@ export default function PitchModal({ isOpen, onClose, buses, onTriggerEvent }) {
         formData.append('file', uploadedFile)
       }
 
-      const res = await fetch('http://localhost:8000/api/detect-real-frame', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/detect-real-frame`, {
         method: 'POST',
         body: formData
       })
