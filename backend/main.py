@@ -9,6 +9,7 @@ import threading
 
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Response, UploadFile, File, Form, Depends
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -17,7 +18,7 @@ from sqlalchemy import func
 from database import engine, SessionLocal, get_db, init_db
 from models import Incident as IncidentModel, AIDetectionLog as AIDetectionLogModel, BusFleet as BusFleetModel
 from simulated_data import BUS_FLEET, BUS_WAYPOINTS, INITIAL_INCIDENTS, ROAD_DIGITAL_TWINS, MULTI_PASS_DEFECTS, VEHICLE_COUNTING_STREAM, generate_evidence_hash
-from cv_engine import generate_annotated_frame, run_real_cv_inference, ASSETS_DIR, CUSTOM_MODEL_PATH, BASE_MODEL_PATH
+from cv_engine import generate_annotated_frame, run_real_cv_inference, ASSETS_DIR, CUSTOM_MODEL_PATH, BASE_MODEL_PATH, INCIDENT_ASSET_MAP
 
 
 
@@ -152,14 +153,15 @@ def get_incidents(db: Session = Depends(get_db)):
 
 @app.get("/api/snapshots/{incident_id}.jpg")
 def get_incident_snapshot(incident_id: str, cam: Optional[str] = "FRONT_AI", weather: Optional[str] = "clear", db: Session = Depends(get_db)):
-    """Serves annotated real JPEG snapshot for the requested incident."""
-    # When interacting via Live Stream with custom angle or weather, always generate dynamically:
+    """Serves incident snapshot image. For standard Alert Queue views, serves pre-existing asset directly.
+    For Live Stream custom angles/weather, runs CV pipeline to generate annotated frame."""
+    # Live Stream custom angle or weather -> run CV pipeline for dynamic annotation
     if (cam and cam != "FRONT_AI") or (weather and weather != "clear") or incident_id.lower() in ["live", "stream"]:
         incident = db.query(IncidentModel).filter(IncidentModel.id == incident_id).first()
         inc_type = incident.type if incident else "pothole"
         bus_id = incident.bus_id if incident else "UK 07 PA 0142"
         conf = incident.confidence if incident else 0.94
-      
+       
         img_bytes = generate_annotated_frame(
             incident_type=inc_type,
             bus_id=bus_id,
@@ -171,17 +173,40 @@ def get_incident_snapshot(incident_id: str, cam: Optional[str] = "FRONT_AI", wea
         
         return Response(content=img_bytes, media_type="image/jpeg")
 
-    # Check if a custom saved snapshot file exists on disk
+    # Standard Alert Queue request -> serve mapped asset directly from disk (no YOLO inference)
+    # Check if a custom saved snapshot file exists on disk first
     custom_snap = os.path.join(SNAPSHOTS_DIR, f"{incident_id}.jpg")
     if os.path.exists(custom_snap):
-        with open(custom_snap, "rb") as f:
-            return Response(content=f.read(), media_type="image/jpeg")
+        return FileResponse(custom_snap, media_type="image/jpeg")
 
+    # Look up the mapped asset for this incident
+    asset_filename = INCIDENT_ASSET_MAP.get(incident_id)
+    if asset_filename:
+        asset_path = os.path.join(ASSETS_DIR, asset_filename)
+        if os.path.exists(asset_path):
+            return FileResponse(asset_path, media_type="image/jpeg")
+
+    # Fallback: query DB for incident type and serve appropriate default asset
     incident = db.query(IncidentModel).filter(IncidentModel.id == incident_id).first()
     inc_type = incident.type if incident else "pothole"
+    
+    # Default asset fallbacks by incident type
+    default_assets = {
+        "hit_and_run": "real_indian_lpr.jpg",
+        "waterlogging": "real_waterlogging.jpg",
+        "pedestrian": "real_side_pavement.jpg",
+        "traffic": "real_traffic_congestion.jpg",
+        "pothole": "pothole_user_1.jpg",
+    }
+    fallback_asset = default_assets.get(inc_type, "pothole_user_1.jpg")
+    fallback_path = os.path.join(ASSETS_DIR, fallback_asset)
+    
+    if os.path.exists(fallback_path):
+        return FileResponse(fallback_path, media_type="image/jpeg")
+
+    # Ultimate fallback: generate via CV pipeline (should rarely happen)
     bus_id = incident.bus_id if incident else "UK 07 PA 0142"
     conf = incident.confidence if incident else 0.94
-
     img_bytes = generate_annotated_frame(
         incident_type=inc_type,
         bus_id=bus_id,
