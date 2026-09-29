@@ -4,8 +4,10 @@ import time
 import glob
 import cv2
 import numpy as np
+import threading
 from datetime import datetime
 from PIL import Image
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
@@ -18,34 +20,56 @@ BASE_MODEL_PATH = os.path.join(BASE_DIR, "yolov8n.pt")
 POTHOLE_MODEL = None
 VEHICLE_MODEL = None
 
+POTHOLE_MODEL_LOCK = threading.Lock()
+VEHICLE_MODEL_LOCK = threading.Lock()
+INFERENCE_LOCK = threading.Lock()
+
 def get_pothole_model():
     global POTHOLE_MODEL
+
     if POTHOLE_MODEL is None:
-        try:
-            from ultralytics import YOLO
-            if os.path.exists(CUSTOM_MODEL_PATH):
-                print(f"[YOLO Engine] Loading custom fine-tuned pothole model from {CUSTOM_MODEL_PATH}")
-                POTHOLE_MODEL = YOLO(CUSTOM_MODEL_PATH)
-            elif os.path.exists(BASE_MODEL_PATH):
-                print(f"[YOLO Engine] Loading base YOLOv8 model from {BASE_MODEL_PATH}")
-                POTHOLE_MODEL = YOLO(BASE_MODEL_PATH)
-            else:
-                POTHOLE_MODEL = YOLO("yolov8n.pt")
-        except Exception as e:
-            print(f"[YOLO Pothole Model Error] {e}")
-            POTHOLE_MODEL = None
+        with POTHOLE_MODEL_LOCK:
+            if POTHOLE_MODEL is None:
+                try:
+                    from ultralytics import YOLO
+
+                    if os.path.exists(CUSTOM_MODEL_PATH):
+                        print(f"[YOLO Engine] Loading custom fine-tuned pothole model from {CUSTOM_MODEL_PATH}")
+                        POTHOLE_MODEL = YOLO(CUSTOM_MODEL_PATH)
+                    elif os.path.exists(BASE_MODEL_PATH):
+                        print(f"[YOLO Engine] Loading base YOLOv8 model from {BASE_MODEL_PATH}")
+                        POTHOLE_MODEL = YOLO(BASE_MODEL_PATH)
+                    else:
+                        POTHOLE_MODEL = YOLO("yolov8n.pt")
+
+                except Exception as e:
+                    print(f"[YOLO Pothole Model Error] {e}")
+                    POTHOLE_MODEL = None
+
     return POTHOLE_MODEL
+
 
 def get_vehicle_model():
     global VEHICLE_MODEL
+
     if VEHICLE_MODEL is None:
-        try:
-            from ultralytics import YOLO
-            model_target = BASE_MODEL_PATH if os.path.exists(BASE_MODEL_PATH) else "yolov8n.pt"
-            VEHICLE_MODEL = YOLO(model_target)
-        except Exception as e:
-            print(f"[YOLO Vehicle Model Error] {e}")
-            VEHICLE_MODEL = None
+        with VEHICLE_MODEL_LOCK:
+            if VEHICLE_MODEL is None:
+                try:
+                    from ultralytics import YOLO
+
+                    model_target = (
+                        BASE_MODEL_PATH
+                        if os.path.exists(BASE_MODEL_PATH)
+                        else "yolov8n.pt"
+                    )
+
+                    VEHICLE_MODEL = YOLO(model_target)
+
+                except Exception as e:
+                    print(f"[YOLO Vehicle Model Error] {e}")
+                    VEHICLE_MODEL = None
+
     return VEHICLE_MODEL
 
 def reload_models():
@@ -107,7 +131,8 @@ def run_real_cv_inference(image_bytes, target_hazard="pothole", bus_id="UK 07 PA
         v_model = get_vehicle_model()
         if v_model is not None:
             try:
-                v_res = v_model(img_bgr, conf=0.25, verbose=False)
+                with INFERENCE_LOCK:
+                    v_res = v_model(img_bgr, conf=0.25, verbose=False)
                 for r in v_res:
                     for box in r.boxes:
                         cls_id = int(box.cls[0].item())
@@ -160,7 +185,8 @@ def run_real_cv_inference(image_bytes, target_hazard="pothole", bus_id="UK 07 PA
         v_model = get_vehicle_model()
         if v_model is not None:
             try:
-                v_res = v_model(img_bgr, conf=0.25, verbose=False)
+                with INFERENCE_LOCK:
+                    v_res = v_model(img_bgr, conf=0.25, verbose=False)
                 for r in v_res:
                     for box in r.boxes:
                         cls_id = int(box.cls[0].item())
@@ -204,7 +230,8 @@ def run_real_cv_inference(image_bytes, target_hazard="pothole", bus_id="UK 07 PA
         p_model = get_pothole_model()
         if p_model is not None:
             try:
-                p_res = p_model(img_bgr, conf=0.20, verbose=False)
+                with INFERENCE_LOCK:
+                     p_res = p_model(img_bgr, conf=0.20, verbose=False)
                 for r in p_res:
                     for box in r.boxes:
                         conf = float(box.conf[0].item())
@@ -282,7 +309,8 @@ def run_real_cv_inference(image_bytes, target_hazard="pothole", bus_id="UK 07 PA
     v_model = get_vehicle_model()
     if v_model is not None and cam_angle != "CABIN_MONITOR":
         try:
-            privacy_res = v_model(img_bgr, conf=0.30, verbose=False)
+            with INFERENCE_LOCK:
+                privacy_res = v_model(img_bgr, conf=0.30, verbose=False)
             for r in privacy_res:
                 for box in r.boxes:
                     cls_id = int(box.cls[0].item())
